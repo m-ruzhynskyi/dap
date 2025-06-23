@@ -4,10 +4,11 @@ import { query } from '@/lib/db';
 import type { Equipment } from '@/types';
 import { randomUUID } from 'crypto';
 import { getSessionData } from '@/lib/auth';
+import { normalizeString } from '@/lib/utils';
 
 export async function GET() {
   try {
-    const result = await query('SELECT id, name, "inventoryNumber", category, location, "dateAdded", "createdAt", "updatedAt" FROM equipment ORDER BY "createdAt" DESC');
+    const result = await query('SELECT id, name, "inventoryNumber", category, location, "dateAdded", "createdAt", "updatedAt", "createdBy", "lastModifiedBy" FROM equipment ORDER BY "createdAt" DESC');
     const equipment = result.rows.map(item => ({
       ...item,
       dateAdded: item.dateAdded ? new Date(item.dateAdded).toISOString().split('T')[0] : null,
@@ -16,7 +17,7 @@ export async function GET() {
     }));
     return NextResponse.json(equipment);
   } catch (error: any) {
-    console.error("Error fetching equipment. Raw error:", error); 
+    console.error("Помилка завантаження техніки. Помилка:", error); 
     let errorMessage = 'Не вдалося завантажити техніку. Сталася неочікувана помилка.';
     let statusCode = 500;
 
@@ -36,12 +37,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const session = await getSessionData();
-  if (!session?.isLoggedIn) {
-    return NextResponse.json({ error: 'Не авторизовано: Ви повинні увійти в систему, щоб додати техніку.' }, { status: 401 });
+  if (!session?.isLoggedIn || session.role !== 'user') {
+    return NextResponse.json({ error: 'Не авторизовано або недостатньо прав для додавання техніки.' }, { status: 403 });
   }
 
   try {
-    const body: Omit<Equipment, 'id' | 'createdAt' | 'updatedAt'> = await request.json();
+    const body: Omit<Equipment, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'lastModifiedBy'> = await request.json();
     
     if (!body.name || !body.inventoryNumber || !body.category || !body.location || !body.dateAdded) {
       return NextResponse.json({ error: 'Відсутні обов\'язкові поля' }, { status: 400 });
@@ -68,16 +69,18 @@ export async function POST(request: Request) {
       id,
       name: body.name,
       inventoryNumber: body.inventoryNumber,
-      category: body.category,
-      location: body.location,
+      category: normalizeString(body.category),
+      location: normalizeString(body.location),
       dateAdded: dateAddedString,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
+      createdBy: session.username,
+      lastModifiedBy: session.username,
     };
 
     const insertQuery = `
-      INSERT INTO equipment (id, name, "inventoryNumber", category, location, "dateAdded", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO equipment (id, name, "inventoryNumber", category, location, "dateAdded", "createdAt", "updatedAt", "createdBy", "lastModifiedBy")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *;
     `;
     const values = [
@@ -89,12 +92,22 @@ export async function POST(request: Request) {
       newEquipment.dateAdded,
       newEquipment.createdAt,
       newEquipment.updatedAt,
+      newEquipment.createdBy,
+      newEquipment.lastModifiedBy,
     ];
 
     const result = await query(insertQuery, values);
     
     if (result.rows.length > 0) {
       const addedItemRow = result.rows[0];
+
+      const historyDetails = `Створено нову одиницю техніки: "${addedItemRow.name}" (Інв. номер: ${addedItemRow.inventoryNumber}).`;
+      const historyQuery = `
+        INSERT INTO equipment_history (id, action, equipment_id, equipment_name, details, changed_by)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `;
+      await query(historyQuery, [randomUUID(), 'Створено', addedItemRow.id, addedItemRow.name, historyDetails, session.username]);
+
       const addedItem = {
         ...addedItemRow,
         dateAdded: addedItemRow.dateAdded ? new Date(addedItemRow.dateAdded).toISOString().split('T')[0] : null,
@@ -107,16 +120,15 @@ export async function POST(request: Request) {
     }
 
   } catch (error: any) {
-    console.error("Error creating equipment. Raw error:", error); 
+    console.error("Помилка створення техніки. Помилка:", error); 
     let errorMessage = 'Не вдалося створити запис техніки. Сталася неочікувана помилка.';
     let statusCode = 500;
     let requestBodyForErrorLog: any; 
     try {
         requestBodyForErrorLog = await request.json(); 
     } catch { 
-        requestBodyForErrorLog = 'Could not parse request body'; 
+        requestBodyForErrorLog = 'Не вдалося розібрати тіло запиту'; 
     }
-
 
     if (error instanceof SyntaxError) { 
         errorMessage = 'Невірний JSON запит.';

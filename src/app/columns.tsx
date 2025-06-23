@@ -109,6 +109,15 @@ export const columns: ColumnDef<Equipment>[] = [
     },
   },
   {
+    accessorKey: "createdBy",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Створив" />
+    ),
+    cell: ({ row }) => (
+      <div className="truncate max-w-[100px]">{row.getValue("createdBy")}</div>
+    ),
+  },
+  {
     id: "actions",
     cell: ({ row, table }) => {
       const equipment = row.original;

@@ -39,7 +39,11 @@ export default function LoginPage() {
           title: "Вхід успішний",
           description: `Вітаємо, ${data.username}!`,
         })
-        router.push('/')
+        if (data.role === 'admin') {
+          router.push('/admin')
+        } else {
+          router.push('/')
+        }
         router.refresh() 
       } else {
         setError(data.error || "Помилка входу. Будь ласка, спробуйте ще раз.")
@@ -81,7 +85,7 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
+                placeholder="useradmin"
                 required
                 disabled={isLoading}
               />
@@ -104,9 +108,6 @@ export default function LoginPage() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="text-center text-xs text-muted-foreground">
-          <p>Для демонстрації: admin / 123456</p>
-        </CardFooter>
       </Card>
     </div>
   )

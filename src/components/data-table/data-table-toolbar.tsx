@@ -30,7 +30,17 @@ export function DataTableToolbar<TData extends { id: string }>({
   const isFiltered = table.getState().columnFilters.length > 0
 
   const handleExport = () => {
-    const dataToExport = table.getFilteredRowModel().rows.map(row => row.original as unknown as Equipment);
+    const dataToExport = table.getFilteredRowModel().rows.map(row => {
+        const original = row.original as unknown as Equipment;
+        return {
+            name: original.name,
+            inventoryNumber: original.inventoryNumber,
+            category: original.category,
+            location: original.location,
+            dateAdded: original.dateAdded,
+            createdBy: original.createdBy,
+        }
+    });
 
     if (!dataToExport || !dataToExport.length) {
       return;
@@ -42,13 +52,14 @@ export function DataTableToolbar<TData extends { id: string }>({
       { key: 'category', title: 'Категорія', width: 25 },
       { key: 'location', title: 'Кабінет', width: 20 },
       { key: 'dateAdded', title: 'Дата обліку', width: 15 },
+      { key: 'createdBy', title: 'Створив', width: 20 },
     ];
 
     const headerRow = columnDefinitions.map(h => h.title);
 
     const dataRows = dataToExport.map(item => {
       return columnDefinitions.map(header => {
-        let cellValue = item[header.key as keyof Equipment];
+        let cellValue = item[header.key as keyof typeof item];
 
         if (header.key === 'dateAdded') {
           if (cellValue) {
@@ -177,11 +188,18 @@ export function DataTableToolbar<TData extends { id: string }>({
             size="sm"
             className="h-9"
             onClick={handleExport}
+            disabled={!isUserLoggedIn}
           >
             <FileDown className="mr-2 h-4 w-4" />
             Експорт XLSX
         </Button>
-        {isUserLoggedIn && onAddEquipment && <AddEquipmentDialog onEquipmentAdd={onAddEquipment} />}
+        {isUserLoggedIn && onAddEquipment && (
+          <AddEquipmentDialog 
+            onEquipmentAdd={onAddEquipment} 
+            categoryOptions={filterCategories}
+            locationOptions={filterLocations}
+          />
+        )}
       </div>
     </div>
   )

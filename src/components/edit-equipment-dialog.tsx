@@ -35,7 +35,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import type { Equipment, EquipmentFormData } from "@/types"
+import type { Equipment, EquipmentFormData, Option } from "@/types"
+import { Combobox } from "@/components/ui/combobox"
 
 const equipmentFormSchema = z.object({
   name: z.string().min(2, { message: "Назва має містити щонайменше 2 символи." }),
@@ -52,34 +53,30 @@ interface EditEquipmentDialogProps {
   onOpenChange: (open: boolean) => void;
   equipmentToEdit: Equipment | null;
   onEquipmentUpdate: (id: string, updatedEquipmentData: EquipmentFormData) => void;
+  categoryOptions: Option[];
+  locationOptions: Option[];
 }
 
 export function EditEquipmentDialog({ 
   isOpen, 
   onOpenChange, 
   equipmentToEdit, 
-  onEquipmentUpdate 
+  onEquipmentUpdate,
+  categoryOptions,
+  locationOptions,
 }: EditEquipmentDialogProps) {
   const form = useForm<EquipmentFormValues>({
     resolver: zodResolver(equipmentFormSchema),
   })
 
   React.useEffect(() => {
-    if (equipmentToEdit) {
+    if (equipmentToEdit && isOpen) {
       form.reset({
         name: equipmentToEdit.name,
         inventoryNumber: equipmentToEdit.inventoryNumber,
         category: equipmentToEdit.category,
         location: equipmentToEdit.location,
         dateAdded: new Date(equipmentToEdit.dateAdded), 
-      })
-    } else {
-       form.reset({
-        name: "",
-        inventoryNumber: "",
-        category: "",
-        location: "",
-        dateAdded: new Date(),
       })
     }
   }, [equipmentToEdit, form, isOpen]) 
@@ -134,11 +131,16 @@ export function EditEquipmentDialog({
                 control={form.control}
                 name="category"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Категорія</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Наприклад, Ноутбуки" {...field} />
-                    </FormControl>
+                    <Combobox
+                        options={categoryOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Оберіть категорію..."
+                        searchPlaceholder="Пошук категорії..."
+                        noResultsText="Категорію не знайдено."
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -147,11 +149,16 @@ export function EditEquipmentDialog({
                 control={form.control}
                 name="location"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Кабінет</FormLabel>
-                     <FormControl>
-                        <Input placeholder="Наприклад, Кабінет 101" {...field} />
-                    </FormControl>
+                     <Combobox
+                        options={locationOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Оберіть кабінет..."
+                        searchPlaceholder="Пошук кабінету..."
+                        noResultsText="Кабінет не знайдено."
+                    />
                     <FormMessage />
                   </FormItem>
                 )}

@@ -6,12 +6,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { columns } from "./columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Equipment, Option, EquipmentFormData } from "@/types";
+import type { Equipment, Option, EquipmentFormData, UserSession } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { CATEGORIES as PREDEFINED_CATEGORIES, LOCATIONS as PREDEFINED_LOCATIONS } from "./equipment-data";
 import { EditEquipmentDialog } from "@/components/edit-equipment-dialog";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import type { UserSession } from "@/lib/auth"; 
 
 async function handleApiResponse<T>(response: Response, entityName: string, successMessage?: string): Promise<T> {
   if (!response.ok) {
@@ -95,6 +94,17 @@ export default function TechTrackerPage() {
   const [currentUser, setCurrentUser] = React.useState<UserSession | null>(null);
   const [isAuthLoading, setIsAuthLoading] = React.useState(true);
 
+  React.useEffect(() => {
+    fetchCurrentUser().then(user => {
+        if (user?.role === 'admin') {
+            router.push('/admin');
+        } else {
+            setCurrentUser(user);
+            setIsAuthLoading(false);
+        }
+    });
+  }, [router, pathname]);
+
 
   const deriveFilterOptions = (equipment: Equipment[], categoriesFromApi: string[], locationsFromApi: string[]) => {
     const uniqueCategoriesFromEquipment = new Set(equipment.map(e => e.category?.trim()).filter(Boolean));
@@ -128,17 +138,14 @@ export default function TechTrackerPage() {
 
   const loadInitialData = React.useCallback(async () => {
     setIsLoading(true);
-    setIsAuthLoading(true);
     try {
-      const [equipment, categories, locations, user] = await Promise.all([
+      const [equipment, categories, locations] = await Promise.all([
         fetchEquipment(),
         fetchCategories(),
         fetchLocations(),
-        fetchCurrentUser()
       ]);
       setEquipmentData(equipment);
       deriveFilterOptions(equipment, categories, locations);
-      setCurrentUser(user);
 
     } catch (error: any) {
       console.error("Failed to load data:", error);
@@ -150,19 +157,19 @@ export default function TechTrackerPage() {
       setEquipmentData([]); 
       setDynamicCategories(PREDEFINED_CATEGORIES);
       setDynamicLocations(PREDEFINED_LOCATIONS);
-      setCurrentUser({ isLoggedIn: false }); 
     } finally {
       setIsLoading(false);
-      setIsAuthLoading(false);
     }
   }, [toast]); 
 
   React.useEffect(() => {
-    loadInitialData();
-  }, [loadInitialData, pathname]); 
+    if (!isAuthLoading) {
+      loadInitialData();
+    }
+  }, [loadInitialData, pathname, isAuthLoading]); 
 
-  const handleAddEquipment = async (newEquipmentData: EquipmentFormData) => {
-    if (!currentUser?.isLoggedIn) {
+  const handleAddEquipment = React.useCallback(async (newEquipmentData: EquipmentFormData) => {
+    if (currentUser?.role !== 'user') {
       toast({ variant: "destructive", title: "Не авторизовано", description: "Будь ласка, увійдіть, щоб додати техніку." });
       return;
     }
@@ -213,19 +220,19 @@ export default function TechTrackerPage() {
         description: error.message || "Не вдалося додати техніку.",
       });
     }
-  };
+  }, [currentUser, toast, loadInitialData]);
 
-  const handleOpenEditDialog = (item: Equipment) => {
-    if (!currentUser?.isLoggedIn) {
+  const handleOpenEditDialog = React.useCallback((item: Equipment) => {
+    if (currentUser?.role !== 'user') {
       toast({ variant: "destructive", title: "Не авторизовано", description: "Будь ласка, увійдіть, щоб редагувати техніку." });
       return;
     }
     setEquipmentToEdit(item);
     setIsEditDialogOpen(true);
-  };
+  }, [currentUser, toast]);
 
-  const handleUpdateEquipment = async (id: string, updatedData: EquipmentFormData) => {
-    if (!currentUser?.isLoggedIn) {
+  const handleUpdateEquipment = React.useCallback(async (id: string, updatedData: EquipmentFormData) => {
+    if (currentUser?.role !== 'user') {
       toast({ variant: "destructive", title: "Не авторизовано", description: "Будь ласка, увійдіть, щоб оновити техніку." });
       return;
     }
@@ -276,19 +283,19 @@ export default function TechTrackerPage() {
         description: error.message || "Не вдалося оновити техніку.",
       });
     }
-  };
+  }, [currentUser, toast, loadInitialData]);
 
-  const handleOpenDeleteDialog = (item: Equipment) => {
-     if (!currentUser?.isLoggedIn) {
+  const handleOpenDeleteDialog = React.useCallback((item: Equipment) => {
+     if (currentUser?.role !== 'user') {
       toast({ variant: "destructive", title: "Не авторизовано", description: "Будь ласка, увійдіть, щоб видалити техніку." });
       return;
     }
     setEquipmentToDelete(item);
     setIsDeleteDialogOpen(true);
-  };
+  }, [currentUser, toast]);
 
-  const handleConfirmDelete = async (id: string) => {
-    if (!currentUser?.isLoggedIn) {
+  const handleConfirmDelete = React.useCallback(async (id: string) => {
+    if (currentUser?.role !== 'user') {
       toast({ variant: "destructive", title: "Не авторизовано", description: "Будь ласка, увійдіть, щоб видалити техніку." });
       return;
     }
@@ -313,8 +320,7 @@ export default function TechTrackerPage() {
         description: error.message || "Не вдалося видалити техніку.",
       });
     }
-  };
-
+  }, [currentUser, toast, loadInitialData]);
 
   if (isLoading || isAuthLoading) {
     return (
@@ -341,20 +347,22 @@ export default function TechTrackerPage() {
       <DataTable 
         columns={columns} 
         data={equipmentData}
-        onAddEquipment={currentUser?.isLoggedIn ? handleAddEquipment : undefined} 
+        onAddEquipment={currentUser?.role === 'user' ? handleAddEquipment : undefined} 
         filterCategories={dynamicCategories}
         filterLocations={dynamicLocations}
-        onEditItem={currentUser?.isLoggedIn ? handleOpenEditDialog : undefined} 
-        onDeleteItem={currentUser?.isLoggedIn ? handleOpenDeleteDialog : undefined} 
-        isUserLoggedIn={currentUser?.isLoggedIn || false}
+        onEditItem={currentUser?.role === 'user' ? handleOpenEditDialog : undefined} 
+        onDeleteItem={currentUser?.role === 'user' ? handleOpenDeleteDialog : undefined} 
+        isUserLoggedIn={currentUser?.isLoggedIn && currentUser.role === 'user'}
       />
-      {currentUser?.isLoggedIn && (
+      {currentUser?.role === 'user' && (
         <>
           <EditEquipmentDialog
             isOpen={isEditDialogOpen}
             onOpenChange={setIsEditDialogOpen}
             equipmentToEdit={equipmentToEdit}
             onEquipmentUpdate={handleUpdateEquipment}
+            categoryOptions={dynamicCategories}
+            locationOptions={dynamicLocations}
           />
           <DeleteConfirmationDialog
             isOpen={isDeleteDialogOpen}

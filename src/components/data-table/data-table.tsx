@@ -31,7 +31,7 @@ import { DataTablePagination } from "./data-table-pagination"
 import { DataTableToolbar } from "./data-table-toolbar"
 import type { EquipmentFormData, Option } from "@/types"; 
 
-interface EquipmentTableMeta<TData> extends TableMeta<TData> {
+interface CustomTableMeta<TData> extends TableMeta<TData> {
   onEditItem?: (item: TData) => void;
   onDeleteItem?: (item: TData) => void;
   isUserLoggedIn: boolean; 
@@ -42,15 +42,16 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   onAddEquipment?: (newEquipment: EquipmentFormData) => void;
-  filterCategories: Option[];
-  filterLocations: Option[];
+  filterCategories?: Option[];
+  filterLocations?: Option[];
   onEditItem?: (item: TData) => void;
   onDeleteItem?: (item: TData) => void;
-  isUserLoggedIn: boolean; 
+  isUserLoggedIn: boolean;
+  toolbarContent?: React.ReactNode;
 }
 
-export function DataTable<TData, TValue>({
-  columns,
+function DataTableComponent<TData, TValue>({
+  columns: initialColumns,
   data,
   onAddEquipment,
   filterCategories,
@@ -58,6 +59,7 @@ export function DataTable<TData, TValue>({
   onEditItem,
   onDeleteItem,
   isUserLoggedIn, 
+  toolbarContent,
 }: DataTableProps<TData, TValue>) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
@@ -65,6 +67,14 @@ export function DataTable<TData, TValue>({
     []
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
+
+  const columns = React.useMemo(
+    () =>
+      isUserLoggedIn
+        ? initialColumns
+        : initialColumns.filter((column) => column.id !== "actions"),
+    [initialColumns, isUserLoggedIn]
+  );
 
   const table = useReactTable({
     data,
@@ -75,10 +85,10 @@ export function DataTable<TData, TValue>({
       columnFilters,
     },
     meta: { 
-      onEditItem: isUserLoggedIn ? onEditItem : undefined, 
-      onDeleteItem: isUserLoggedIn ? onDeleteItem : undefined,
+      onEditItem: onEditItem,
+      onDeleteItem: onDeleteItem,
       isUserLoggedIn, 
-    } as EquipmentTableMeta<TData>, 
+    } as CustomTableMeta<TData>, 
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
@@ -90,28 +100,18 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
-  React.useEffect(() => {
-    table.setOptions(prev => ({
-      ...prev,
-      data,
-      meta: { 
-        ...prev.meta,
-        onEditItem: isUserLoggedIn ? onEditItem : undefined,
-        onDeleteItem: isUserLoggedIn ? onDeleteItem : undefined,
-        isUserLoggedIn,
-      }
-    }))
-  }, [data, table, onEditItem, onDeleteItem, isUserLoggedIn])
-
   return (
     <div className="space-y-4">
-      <DataTableToolbar 
-        table={table} 
-        onAddEquipment={onAddEquipment} 
-        filterCategories={filterCategories}
-        filterLocations={filterLocations}
-        isUserLoggedIn={isUserLoggedIn} 
-      />
+      { toolbarContent ? ( <div className="flex items-center justify-end">{toolbarContent}</div> )
+      : (filterCategories && filterLocations) ? (
+        <DataTableToolbar 
+          table={table} 
+          onAddEquipment={onAddEquipment} 
+          filterCategories={filterCategories}
+          filterLocations={filterLocations}
+          isUserLoggedIn={isUserLoggedIn} 
+        />
+       ) : null}
       <div className="rounded-md border shadow-sm">
         <Table>
           <TableHeader>
@@ -119,7 +119,7 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
+                    <TableHead key={header.id} style={{width: header.getSize() !== 150 ? undefined : `${header.getSize()}px`}} colSpan={header.colSpan}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -165,3 +165,5 @@ export function DataTable<TData, TValue>({
     </div>
   )
 }
+
+export const DataTable = React.memo(DataTableComponent) as typeof DataTableComponent;

@@ -1,12 +1,19 @@
 
 import { NextResponse } from 'next/server';
-import { getSessionData, UserSession } from '@/lib/auth';
+import { getSessionData } from '@/lib/auth';
+import type { UserSession } from '@/types';
 
 export async function GET() {
   try {
     const session = await getSessionData();
     if (session?.isLoggedIn && session.username) {
-      return NextResponse.json({ username: session.username, isLoggedIn: true } as UserSession);
+      return NextResponse.json({ 
+        id: session.id,
+        username: session.username, 
+        isLoggedIn: true,
+        role: session.role,
+        department: session.department
+      } as UserSession);
     }
     return NextResponse.json({ isLoggedIn: false } as UserSession);
   } catch (error) {

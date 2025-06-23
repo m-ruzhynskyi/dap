@@ -2,11 +2,7 @@
 import { sealData, unsealData } from 'iron-session';
 import { cookies } from 'next/headers';
 import type { IronSessionOptions } from 'iron-session';
-
-export interface UserSession {
-  username?: string;
-  isLoggedIn?: boolean;
-}
+import type { UserSession } from '@/types';
 
 export const sessionOptions: IronSessionOptions = {
   password: process.env.SESSION_SECRET as string, 
