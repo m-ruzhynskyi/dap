@@ -92,7 +92,7 @@ export default function ProfilePage() {
             <AvatarFallback>{currentUser.username?.substring(0,2).toUpperCase() || 'IT'}</AvatarFallback>
           </Avatar>
           <CardTitle className="text-2xl">{currentUser.username || 'IT Спеціаліст'}</CardTitle>
-          <CardDescription>TechTracker Enterprise</CardDescription>
+          <CardDescription>ДАП 'Україна'</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">

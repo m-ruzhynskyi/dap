@@ -76,7 +76,7 @@ export function EditEquipmentDialog({
         inventoryNumber: equipmentToEdit.inventoryNumber,
         category: equipmentToEdit.category,
         location: equipmentToEdit.location,
-        dateAdded: new Date(equipmentToEdit.dateAdded), 
+        dateAdded: new Date(new Date(equipmentToEdit.dateAdded).getTime() + 24 * 60 * 60 * 1000),
       })
     }
   }, [equipmentToEdit, form, isOpen]) 

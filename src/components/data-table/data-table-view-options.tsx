@@ -27,7 +27,7 @@ export function DataTableViewOptions<TData>({
         <Button
           variant="outline"
           size="sm"
-          className="ml-auto h-9 flex" // Changed from "hidden lg:flex"
+          className="ml-auto h-9 flex"
         >
           <SlidersHorizontal className="mr-2 h-4 w-4" />
           View
@@ -43,7 +43,6 @@ export function DataTableViewOptions<TData>({
               typeof column.accessorFn !== "undefined" && column.getCanHide()
           )
           .map((column) => {
-            // Map known Ukrainian titles for more user-friendly labels
             let columnLabel = column.id;
             if (column.id === 'name') columnLabel = 'Назва';
             if (column.id === 'inventoryNumber') columnLabel = 'Інв. номер';
