@@ -43,6 +43,7 @@ export interface HistoryEntry {
   action: 'Створено' | 'Оновлено' | 'Видалено';
   equipment_id: string;
   equipment_name: string;
+  equipment_inventory_number?: string;
   details: string;
   changed_by: string;
   changed_at: string;

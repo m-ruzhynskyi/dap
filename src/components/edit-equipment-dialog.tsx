@@ -71,12 +71,20 @@ export function EditEquipmentDialog({
 
   React.useEffect(() => {
     if (equipmentToEdit && isOpen) {
+      const dateValue = equipmentToEdit.dateAdded;
+      let initialDate: Date;
+      if (typeof dateValue === 'string') {
+        const parts = dateValue.split('T')[0].split('-').map(Number);
+        initialDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+      } else {
+        initialDate = dateValue;
+      }
       form.reset({
         name: equipmentToEdit.name,
         inventoryNumber: equipmentToEdit.inventoryNumber,
         category: equipmentToEdit.category,
         location: equipmentToEdit.location,
-        dateAdded: new Date(new Date(equipmentToEdit.dateAdded).getTime() + 24 * 60 * 60 * 1000),
+        dateAdded: initialDate, 
       })
     }
   }, [equipmentToEdit, form, isOpen]) 

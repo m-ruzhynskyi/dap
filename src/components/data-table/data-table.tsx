@@ -1,4 +1,3 @@
-
 "use client"
 
 import {
@@ -67,6 +66,7 @@ function DataTableComponent<TData, TValue>({
     []
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
+  const [globalFilter, setGlobalFilter] = React.useState("")
 
   const columns = React.useMemo(
     () =>
@@ -83,6 +83,7 @@ function DataTableComponent<TData, TValue>({
       sorting,
       columnVisibility,
       columnFilters,
+      globalFilter,
     },
     meta: { 
       onEditItem: onEditItem,
@@ -92,6 +93,7 @@ function DataTableComponent<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

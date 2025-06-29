@@ -85,7 +85,7 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="І`мя користувача ..."
+                placeholder="useradmin"
                 required
                 disabled={isLoading}
               />

@@ -105,10 +105,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (changes.length > 0) {
         const historyDetails = `Оновлено: ${changes.join(', ')}.`;
         const historyQuery = `
-            INSERT INTO equipment_history (id, action, equipment_id, equipment_name, details, changed_by)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO equipment_history (id, action, equipment_id, equipment_name, equipment_inventory_number, details, changed_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
         `;
-        await query(historyQuery, [randomUUID(), 'Оновлено', updatedItemRow.id, updatedItemRow.name, historyDetails, session.username]);
+        await query(historyQuery, [randomUUID(), 'Оновлено', updatedItemRow.id, updatedItemRow.name, updatedItemRow.inventoryNumber, historyDetails, session.username]);
     }
 
     const updatedItem = {
@@ -175,10 +175,10 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
     const historyDetails = `Видалено техніку: "${itemToDelete.name}" (Інв. номер: ${itemToDelete.inventoryNumber}).`;
     const historyQuery = `
-        INSERT INTO equipment_history (id, action, equipment_id, equipment_name, details, changed_by)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO equipment_history (id, action, equipment_id, equipment_name, equipment_inventory_number, details, changed_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
-    await query(historyQuery, [randomUUID(), 'Видалено', itemToDelete.id, itemToDelete.name, historyDetails, session.username]);
+    await query(historyQuery, [randomUUID(), 'Видалено', itemToDelete.id, itemToDelete.name, itemToDelete.inventoryNumber, historyDetails, session.username]);
 
     return NextResponse.json({ message: 'Техніку успішно видалено' }, { status: 200 });
   } catch (error: any) {

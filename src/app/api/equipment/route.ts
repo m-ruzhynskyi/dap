@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import type { Equipment } from '@/types';
@@ -102,10 +103,10 @@ export async function POST(request: Request) {
 
       const historyDetails = `Створено нову одиницю техніки: "${addedItemRow.name}" (Інв. номер: ${addedItemRow.inventoryNumber}).`;
       const historyQuery = `
-        INSERT INTO equipment_history (id, action, equipment_id, equipment_name, details, changed_by)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO equipment_history (id, action, equipment_id, equipment_name, equipment_inventory_number, details, changed_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
       `;
-      await query(historyQuery, [randomUUID(), 'Створено', addedItemRow.id, addedItemRow.name, historyDetails, session.username]);
+      await query(historyQuery, [randomUUID(), 'Створено', addedItemRow.id, addedItemRow.name, addedItemRow.inventoryNumber, historyDetails, session.username]);
 
       const addedItem = {
         ...addedItemRow,

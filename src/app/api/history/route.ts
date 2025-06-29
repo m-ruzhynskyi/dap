@@ -5,7 +5,7 @@ import type { HistoryEntry } from '@/types';
 
 export async function GET() {
   try {
-    const result = await query('SELECT id, action, equipment_id, equipment_name, details, changed_by, changed_at FROM equipment_history ORDER BY "changed_at" DESC');
+    const result = await query('SELECT id, action, equipment_id, equipment_name, equipment_inventory_number, details, changed_by, changed_at FROM equipment_history ORDER BY "changed_at" DESC');
     const history: HistoryEntry[] = result.rows.map(item => ({
       ...item,
       changed_at: new Date(item.changed_at).toISOString(),

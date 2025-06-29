@@ -104,7 +104,7 @@ export const columns: ColumnDef<Equipment>[] = [
       if (isNaN(date.getTime())) { 
         return <div className="min-w-[70px]">Невірна дата</div>;
       }
-      const adjustedDate = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()+1);
+      const adjustedDate = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
       return <div className="min-w-[70px] whitespace-nowrap">{adjustedDate.toLocaleDateString('uk-UA')}</div>
     },
   },

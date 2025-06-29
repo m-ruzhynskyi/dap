@@ -43,6 +43,7 @@ export function DataTableViewOptions<TData>({
               typeof column.accessorFn !== "undefined" && column.getCanHide()
           )
           .map((column) => {
+            // Map known Ukrainian titles for more user-friendly labels
             let columnLabel = column.id;
             if (column.id === 'name') columnLabel = 'Назва';
             if (column.id === 'inventoryNumber') columnLabel = 'Інв. номер';

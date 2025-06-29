@@ -26,6 +26,12 @@ export const columns: ColumnDef<HistoryEntry>[] = [
      cell: ({ row }) => <div className="font-medium">{row.getValue("equipment_name")}</div>,
   },
   {
+    accessorKey: "equipment_inventory_number",
+    header: "Інв. номер",
+    cell: ({ row }) => row.original.equipment_inventory_number || "—",
+    size: 120,
+  },
+  {
     accessorKey: "details",
     header: "Деталі",
     cell: ({ row }) => {

@@ -1,4 +1,3 @@
-
 "use client"
 
 import type { Table } from "@tanstack/react-table"
@@ -27,7 +26,7 @@ export function DataTableToolbar<TData extends { id: string }>({
   filterLocations,
   isUserLoggedIn,
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0
+  const isFiltered = table.getState().columnFilters.length > 0 || !!table.getState().globalFilter;
 
   const handleExport = () => {
     const dataToExport = table.getFilteredRowModel().rows.map(row => {
@@ -120,15 +119,13 @@ export function DataTableToolbar<TData extends { id: string }>({
             }
         }
         
-        if (R === 0) { 
-          ws[cell_address].s = JSON.parse(JSON.stringify(headerCellStyleDef)); 
-        } else { 
-          ws[cell_address].s = JSON.parse(JSON.stringify(dataCellStyleDef)); 
+        ws[cell_address].s = R === 0
+          ? JSON.parse(JSON.stringify(headerCellStyleDef))
+          : JSON.parse(JSON.stringify(dataCellStyleDef));
           
-          const dateColumnIndex = columnDefinitions.findIndex(col => col.key === 'dateAdded');
-          if (C === dateColumnIndex && ws[cell_address].v) {
-            ws[cell_address].t = 's'; 
-          }
+        const dateColumnIndex = columnDefinitions.findIndex(col => col.key === 'dateAdded');
+        if (R > 0 && C === dateColumnIndex && ws[cell_address].v) {
+          ws[cell_address].t = 's';
         }
       }
     }
@@ -150,11 +147,9 @@ export function DataTableToolbar<TData extends { id: string }>({
     <div className="flex flex-col items-center justify-between gap-y-2 py-4 sm:flex-row sm:gap-y-0">
       <div className="flex w-full flex-1 flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
         <Input
-          placeholder="Фільтр за назвою..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
+          placeholder="Пошук за назвою чи інв. номером..."
+          value={(table.getState().globalFilter as string) ?? ""}
+          onChange={(event) => table.setGlobalFilter(event.target.value)}
           className="h-9 w-full sm:max-w-xs"
         />
         {table.getColumn("category") && (
@@ -174,7 +169,10 @@ export function DataTableToolbar<TData extends { id: string }>({
         {isFiltered && (
           <Button
             variant="ghost"
-            onClick={() => table.resetColumnFilters()}
+            onClick={() => {
+              table.resetColumnFilters();
+              table.setGlobalFilter("");
+            }}
             className="h-9 px-2 lg:px-3"
           >
             Очистити
@@ -186,7 +184,7 @@ export function DataTableToolbar<TData extends { id: string }>({
         <Button
             variant="outline"
             size="sm"
-            className="h-9"
+            className="h-9 cursor-pointer"
             onClick={handleExport}
             disabled={!isUserLoggedIn}
           >

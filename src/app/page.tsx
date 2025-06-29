@@ -106,7 +106,7 @@ export default function TechTrackerPage() {
   }, [router, pathname]);
 
 
-  const deriveFilterOptions = (equipment: Equipment[], categoriesFromApi: string[], locationsFromApi: string[]) => {
+  const deriveFilterOptions = React.useCallback((equipment: Equipment[], categoriesFromApi: string[], locationsFromApi: string[]) => {
     const uniqueCategoriesFromEquipment = new Set(equipment.map(e => e.category?.trim()).filter(Boolean));
     const uniqueLocationsFromEquipment = new Set(equipment.map(e => e.location?.trim()).filter(Boolean));
 
@@ -134,7 +134,7 @@ export default function TechTrackerPage() {
       return predefined || { value: locValue, label: locValue };
     }).sort((a,b) => a.label.localeCompare(b.label));
     setDynamicLocations(finalLocations.length > 0 ? finalLocations : PREDEFINED_LOCATIONS);
-  };
+  }, []);
 
   const loadInitialData = React.useCallback(async () => {
     setIsLoading(true);
@@ -160,7 +160,7 @@ export default function TechTrackerPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]); 
+  }, [toast, deriveFilterOptions]); 
 
   React.useEffect(() => {
     if (!isAuthLoading) {
@@ -176,16 +176,16 @@ export default function TechTrackerPage() {
     try {
       let dateAddedString: string;
       if (newEquipmentData.dateAdded instanceof Date) {
-        const year = newEquipmentData.dateAdded.getFullYear();
-        const month = (newEquipmentData.dateAdded.getMonth() + 1).toString().padStart(2, '0');
-        const day = newEquipmentData.dateAdded.getDate().toString().padStart(2, '0');
+        const year = newEquipmentData.dateAdded.getUTCFullYear();
+        const month = (newEquipmentData.dateAdded.getUTCMonth() + 1).toString().padStart(2, '0');
+        const day = newEquipmentData.dateAdded.getUTCDate().toString().padStart(2, '0');
         dateAddedString = `${year}-${month}-${day}`;
       } else if (typeof newEquipmentData.dateAdded === 'string') {
          if (newEquipmentData.dateAdded.includes('T')) { 
             const d = new Date(newEquipmentData.dateAdded);
-            const year = d.getFullYear(); 
-            const month = (d.getMonth() + 1).toString().padStart(2, '0');
-            const day = d.getDate().toString().padStart(2, '0');
+            const year = d.getUTCFullYear(); 
+            const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
+            const day = d.getUTCDate().toString().padStart(2, '0');
             dateAddedString = `${year}-${month}-${day}`;
         } else { 
             dateAddedString = newEquipmentData.dateAdded;
@@ -239,16 +239,16 @@ export default function TechTrackerPage() {
      try {
       let dateAddedString: string;
       if (updatedData.dateAdded instanceof Date) {
-        const year = updatedData.dateAdded.getFullYear();
-        const month = (updatedData.dateAdded.getMonth() + 1).toString().padStart(2, '0');
-        const day = updatedData.dateAdded.getDate().toString().padStart(2, '0');
+        const year = updatedData.dateAdded.getUTCFullYear();
+        const month = (updatedData.dateAdded.getUTCMonth() + 1).toString().padStart(2, '0');
+        const day = updatedData.dateAdded.getUTCDate().toString().padStart(2, '0');
         dateAddedString = `${year}-${month}-${day}`;
       } else if (typeof updatedData.dateAdded === 'string') {
          if (updatedData.dateAdded.includes('T')) {
             const d = new Date(updatedData.dateAdded);
-            const year = d.getFullYear();
-            const month = (d.getMonth() + 1).toString().padStart(2, '0');
-            const day = d.getDate().toString().padStart(2, '0');
+            const year = d.getUTCFullYear();
+            const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
+            const day = d.getUTCDate().toString().padStart(2, '0');
             dateAddedString = `${year}-${month}-${day}`;
         } else {
             dateAddedString = updatedData.dateAdded;
@@ -352,7 +352,7 @@ export default function TechTrackerPage() {
         filterLocations={dynamicLocations}
         onEditItem={currentUser?.role === 'user' ? handleOpenEditDialog : undefined} 
         onDeleteItem={currentUser?.role === 'user' ? handleOpenDeleteDialog : undefined} 
-        isUserLoggedIn={currentUser?.isLoggedIn && currentUser.role === 'user'}
+        isUserLoggedIn={!!currentUser?.isLoggedIn}
       />
       {currentUser?.role === 'user' && (
         <>
