@@ -1,8 +1,9 @@
 
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
 import dotenv from 'dotenv';
 
 dotenv.config();
+types.setTypeParser(types.builtins.DATE, (val: string) => val);
 
 let pool: Pool;
 

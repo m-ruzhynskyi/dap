@@ -11,13 +11,13 @@ export async function GET() {
     const result = await query('SELECT id, name, "inventoryNumber", category, location, "dateAdded", "createdAt", "updatedAt", "createdBy", "lastModifiedBy" FROM equipment ORDER BY "createdAt" DESC');
     const equipment = result.rows.map(item => ({
       ...item,
-      dateAdded: item.dateAdded ? new Date(item.dateAdded).toISOString().split('T')[0] : null,
+      dateAdded: item.dateAdded,
       createdAt: item.createdAt ? new Date(item.createdAt).toISOString() : null,
       updatedAt: item.updatedAt ? new Date(item.updatedAt).toISOString() : null,
     }));
     return NextResponse.json(equipment);
   } catch (error: any) {
-    console.error("Помилка завантаження техніки. Помилка:", error); 
+    console.error("Помилка завантаження техніки. Помилка:", error);
     let errorMessage = 'Не вдалося завантажити техніку. Сталася неочікувана помилка.';
     let statusCode = 500;
 
@@ -27,10 +27,10 @@ export async function GET() {
         errorMessage = "Не вдалося ініціалізувати підключення до бази даних. Перевірте логи сервера.";
     } else if (error.code === '42P01') {
         errorMessage = "Таблицю 'equipment' не знайдено в базі даних. Будь ласка, переконайтеся, що таблицю створено та схема правильна.";
-    } else if (error.message) { 
+    } else if (error.message) {
         errorMessage = error.message;
     }
-    
+
     return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
 }
@@ -43,14 +43,14 @@ export async function POST(request: Request) {
 
   try {
     const body: Omit<Equipment, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'lastModifiedBy'> = await request.json();
-    
+
     if (!body.name || !body.inventoryNumber || !body.category || !body.location || !body.dateAdded) {
       return NextResponse.json({ error: 'Відсутні обов\'язкові поля' }, { status: 400 });
     }
-    
+
     const id = randomUUID();
     const now = new Date();
-    
+
     const dateAddedString = body.dateAdded as string;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateAddedString)) {
         return NextResponse.json({ error: 'Невірний формат дати для dateAdded. Очікується РРРР-ММ-ДД.' }, { status: 400 });
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const dateParts = dateAddedString.split('-').map(Number);
     const parsedDate = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
 
-    if (isNaN(parsedDate.getTime()) || 
+    if (isNaN(parsedDate.getTime()) ||
         parsedDate.getUTCFullYear() !== dateParts[0] ||
         parsedDate.getUTCMonth() !== dateParts[1] - 1 ||
         parsedDate.getUTCDate() !== dateParts[2]) {
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
     ];
 
     const result = await query(insertQuery, values);
-    
+
     if (result.rows.length > 0) {
       const addedItemRow = result.rows[0];
 
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
 
       const addedItem = {
         ...addedItemRow,
-        dateAdded: addedItemRow.dateAdded ? new Date(addedItemRow.dateAdded).toISOString().split('T')[0] : null,
+        dateAdded: addedItemRow.dateAdded,
         createdAt: new Date(addedItemRow.createdAt).toISOString(),
         updatedAt: new Date(addedItemRow.updatedAt).toISOString(),
       };

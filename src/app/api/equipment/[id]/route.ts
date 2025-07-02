@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const item = result.rows[0];
     const equipment = {
         ...item,
-        dateAdded: item.dateAdded ? new Date(item.dateAdded).toISOString().split('T')[0] : null,
+        dateAdded: item.dateAdded,
         createdAt: item.createdAt ? new Date(item.createdAt).toISOString() : null,
         updatedAt: item.updatedAt ? new Date(item.updatedAt).toISOString() : null,
     };
@@ -91,7 +91,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Техніку не знайдено або не оновлено' }, { status: 404 });
     }
-    
+
     const updatedItemRow = result.rows[0];
 
     const changes = [];
@@ -99,9 +99,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (beforeItem.inventoryNumber !== updatedItemRow.inventoryNumber) changes.push(`інв. номер з "${beforeItem.inventoryNumber}" на "${updatedItemRow.inventoryNumber}"`);
     if (beforeItem.category !== updatedItemRow.category) changes.push(`категорію з "${beforeItem.category}" на "${updatedItemRow.category}"`);
     if (beforeItem.location !== updatedItemRow.location) changes.push(`кабінет з "${beforeItem.location}" на "${updatedItemRow.location}"`);
-    const beforeDate = new Date(beforeItem.dateAdded).toISOString().split('T')[0];
+
+    const beforeDate = beforeItem.dateAdded;
     if (beforeDate !== dateAddedString) changes.push(`дату обліку з "${beforeDate}" на "${dateAddedString}"`);
-    
+
     if (changes.length > 0) {
         const historyDetails = `Оновлено: ${changes.join(', ')}.`;
         const historyQuery = `
@@ -113,7 +114,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     const updatedItem = {
         ...updatedItemRow,
-        dateAdded: updatedItemRow.dateAdded ? new Date(updatedItemRow.dateAdded).toISOString().split('T')[0] : null,
+        dateAdded: updatedItemRow.dateAdded,
         createdAt: new Date(updatedItemRow.createdAt).toISOString(),
         updatedAt: new Date(updatedItemRow.updatedAt).toISOString(),
     };
