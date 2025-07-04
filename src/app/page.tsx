@@ -176,22 +176,13 @@ export default function TechTrackerPage() {
     try {
       let dateAddedString: string;
       if (newEquipmentData.dateAdded instanceof Date) {
-        const year = newEquipmentData.dateAdded.getUTCFullYear();
-        const month = (newEquipmentData.dateAdded.getUTCMonth() + 1).toString().padStart(2, '0');
-        const day = newEquipmentData.dateAdded.getUTCDate().toString().padStart(2, '0');
+        const date = newEquipmentData.dateAdded;
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
         dateAddedString = `${year}-${month}-${day}`;
-      } else if (typeof newEquipmentData.dateAdded === 'string') {
-         if (newEquipmentData.dateAdded.includes('T')) { 
-            const d = new Date(newEquipmentData.dateAdded);
-            const year = d.getUTCFullYear(); 
-            const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
-            const day = d.getUTCDate().toString().padStart(2, '0');
-            dateAddedString = `${year}-${month}-${day}`;
-        } else { 
-            dateAddedString = newEquipmentData.dateAdded;
-        }
       } else {
-        throw new Error("Невірний тип dateAdded у даних форми.");
+        throw new Error("Невірний тип dateAdded у даних форми. Очікувався об'єкт Date.");
       }
 
       const response = await fetch('/api/equipment', {
@@ -201,17 +192,17 @@ export default function TechTrackerPage() {
         },
         body: JSON.stringify({
           ...newEquipmentData,
-          dateAdded: dateAddedString, 
+          dateAdded: dateAddedString,
         }),
       });
 
       await handleApiResponse(response, 'додати техніку', 'новий запис техніки');
-      
+
       toast({
         title: "Техніку додано",
         description: `${newEquipmentData.name} успішно додано до бази даних.`,
       });
-      await loadInitialData(); 
+      await loadInitialData();
     } catch (error: any) {
       console.error("Error adding equipment:", error);
       toast({
@@ -239,22 +230,13 @@ export default function TechTrackerPage() {
      try {
       let dateAddedString: string;
       if (updatedData.dateAdded instanceof Date) {
-        const year = updatedData.dateAdded.getUTCFullYear();
-        const month = (updatedData.dateAdded.getUTCMonth() + 1).toString().padStart(2, '0');
-        const day = updatedData.dateAdded.getUTCDate().toString().padStart(2, '0');
+        const date = updatedData.dateAdded;
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
         dateAddedString = `${year}-${month}-${day}`;
-      } else if (typeof updatedData.dateAdded === 'string') {
-         if (updatedData.dateAdded.includes('T')) {
-            const d = new Date(updatedData.dateAdded);
-            const year = d.getUTCFullYear();
-            const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
-            const day = d.getUTCDate().toString().padStart(2, '0');
-            dateAddedString = `${year}-${month}-${day}`;
-        } else {
-            dateAddedString = updatedData.dateAdded;
-        }
       } else {
-        throw new Error("Невірний тип dateAdded у даних форми.");
+        throw new Error("Невірний тип dateAdded у даних форми. Очікувався об'єкт Date.");
       }
       const response = await fetch(`/api/equipment/${id}`, {
         method: 'PUT',
